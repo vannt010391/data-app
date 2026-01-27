@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Trang chủ - Ứng dụng Tổng hợp Dữ liệu{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4"><i class="bi bi-house-door"></i> Trang chủ</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">Tổng số phường/xã</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ total_wards }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Biểu 1 - KQ 2025</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ bieu1_count }}</h2>
+                <a href="{% url 'bieu1_list' %}" class="btn btn-light btn-sm">Xem chi tiết</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-header">Biểu 2 - KH 2026</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ bieu2_count }}</h2>
+                <a href="{% url 'bieu2_list' %}" class="btn btn-light btn-sm">Xem chi tiết</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Biểu 3 - KH 2026-2030</div>
+            <div class="card-body">
+                <h2 class="card-title">{{ bieu3_count }}</h2>
+                <a href="{% url 'bieu3_list' %}" class="btn btn-light btn-sm">Xem chi tiết</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-primary mb-3">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="bi bi-cloud-upload"></i> Import Nhanh</h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'import_all_bieu' %}" class="btn btn-lg btn-primary w-100">
+                    <i class="bi bi-file-earmark-excel"></i> 
+                    Import Tất Cả 3 Biểu Từ 1 File Excel (3 Sheet)
+                </a>
+                <p class="text-muted mt-2 mb-0">
+                    <small>Import một lần cho cả 3 biểu từ file Excel có 3 sheet</small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Các biểu mẫu</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'bieu1_list' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Biểu 1 - KẾT QUẢ CÔNG NHẬN MỚI và CÔNG NHẬN LẠI TRƯỜNG CHUẨN QUỐC GIA NĂM 2025</h5>
+                            <span class="badge bg-success">{{ bieu1_count }}/{{ total_wards }}</span>
+                        </div>
+                        <p class="mb-1">Tổng hợp kết quả công nhận mới và công nhận lại trường chuẩn quốc gia năm 2025</p>
+                    </a>
+                    
+                    <a href="{% url 'bieu2_list' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Biểu 2 - KẾ HOẠCH CÔNG NHẬN MỚI VÀ CÔNG NHẬN LẠI TRƯỜNG CHUẨN QUỐC GIA NĂM 2026</h5>
+                            <span class="badge bg-warning">{{ bieu2_count }}/{{ total_wards }}</span>
+                        </div>
+                        <p class="mb-1">Tổng hợp kế hoạch công nhận mới và công nhận lại trường chuẩn quốc gia năm 2026</p>
+                    </a>
+                    
+                    <a href="{% url 'bieu3_list' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Biểu 3 - KẾ HOẠCH CÔNG NHẬN MỚI VÀ CÔNG NHẬN LẠI TRƯỜNG CHUẨN QUỐC GIA GIAI ĐOẠN 2026-2030</h5>
+                            <span class="badge bg-primary">{{ bieu3_count }}/{{ total_wards }}</span>
+                        </div>
+                        <p class="mb-1">Tổng hợp kế hoạch công nhận mới và công nhận lại trường chuẩn quốc gia giai đoạn 2026-2030</p>
+                    </a>
+                    
+                    <a href="{% url 'bieu4_list' %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Biểu 4 - CHƯƠNG TRÌNH THÀNH PHỐ GIAO</h5>
+                            <span class="badge bg-danger">{{ bieu4_count }}</span>
+                        </div>
+                        <p class="mb-1">Tổng hợp chương trình thành phố giao</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

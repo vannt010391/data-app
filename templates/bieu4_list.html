@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block title %}Biểu 4 - CT TP{% endblock %}
+{% block content %}
+<h2>Biểu 4 - CHƯƠNG TRÌNH THÀNH PHỐ GIAO</h2>
+<p>Tự động tính từ Biểu 1</p>
+<a href="{% url 'bieu4_export' %}" class="btn btn-success">Xuất Excel</a>
+<table class="table table-bordered mt-3">
+<thead><tr><th>STT</th><th>Đơn vị</th><th>Công nhận mới</th><th>Công nhận lại</th><th>Loại</th></tr></thead>
+<tbody>
+{% for r in records %}
+<tr><td>{{ r.stt }}</td><td>{{ r.don_vi }}</td><td>{{ r.cong_nhan_moi }}</td><td>{{ r.cong_nhan_lai }}</td><td>{{ r.loai }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}

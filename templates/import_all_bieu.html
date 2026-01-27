@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Import Tất Cả Biểu{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-cloud-upload"></i> Import Tất Cả 3 Biểu Từ 1 File Excel</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5><i class="bi bi-info-circle"></i> Hướng dẫn:</h5>
+                    <ul>
+                        <li>File Excel phải có <strong>3 sheet</strong>:
+                            <ul>
+                                <li><strong>Sheet 1:</strong> Biểu 1 - KQ 2025</li>
+                                <li><strong>Sheet 2:</strong> Biểu 2 - KH 2026</li>
+                                <li><strong>Sheet 3:</strong> Biểu 3 - KH 2026-2030</li>
+                            </ul>
+                        </li>
+                        <li>Mỗi sheet phải đúng định dạng mẫu</li>
+                        <li>Dữ liệu sẽ được import vào cả 3 biểu cùng lúc</li>
+                    </ul>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-geo-alt"></i> Chọn Phường/Xã
+                        </label>
+                        <select class="form-select form-select-lg" name="ward_id" required>
+                            <option value="">-- Chọn phường/xã --</option>
+                            {% for ward in wards %}
+                            <option value="{{ ward.id }}">{{ ward.stt }}. {{ ward.don_vi }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-file-earmark-excel"></i> Chọn File Excel (có 3 sheet)
+                        </label>
+                        <input type="file" 
+                               class="form-control form-control-lg" 
+                               name="excel_file" 
+                               accept=".xlsx,.xls" 
+                               required>
+                        <small class="text-muted">Chỉ chấp nhận file .xlsx hoặc .xls</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-upload"></i> Import Tất Cả 3 Biểu
+                        </button>
+                        <a href="{% url 'home' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-lightbulb"></i> Mẹo</h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li>Có thể import riêng từng biểu bằng menu tương ứng</li>
+                    <li>Dữ liệu trùng (cùng tên trường) sẽ được cập nhật</li>
+                    <li>Kiểm tra kết quả sau khi import ở từng biểu</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

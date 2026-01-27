@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% block title %}Biểu 2 - KH 2026{% endblock %}
+{% block content %}
+<style>
+.bieu2-container {
+    font-size: 0.85rem;
+}
+.bieu2-table-wrapper {
+    max-height: 70vh;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+.bieu2-table {
+    font-size: 0.8rem;
+    margin-bottom: 0;
+}
+.bieu2-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #fff;
+}
+.bieu2-table thead th {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+    vertical-align: middle;
+    padding: 0.5rem 0.3rem;
+    white-space: nowrap;
+}
+.bieu2-table tbody td {
+    padding: 0.4rem 0.3rem;
+    vertical-align: middle;
+}
+.bieu2-table tbody td[contenteditable="true"] {
+    cursor: text;
+    background-color: #fff;
+    transition: background-color 0.2s;
+}
+.bieu2-table tbody td[contenteditable="true"]:hover {
+    background-color: #fff3cd;
+    outline: 1px solid #ffc107;
+}
+.bieu2-table tbody td[contenteditable="true"]:focus {
+    background-color: #e7f1ff;
+    outline: 2px solid #0d6efd;
+}
+.sticky-col {
+    position: sticky;
+    background-color: #fff;
+    z-index: 5;
+}
+.col-checkbox { left: 0; width: 35px; }
+.col-stt { left: 35px; width: 45px; }
+.col-ward { left: 80px; min-width: 100px; max-width: 120px; }
+.col-school { left: 200px; min-width: 180px; max-width: 220px; }
+</style>
+
+<div class="bieu2-container">
+<h2 class="mb-3">
+    <i class="bi bi-calendar-check"></i> Biểu 2 - KẾ HOẠCH CÔNG NHẬN NĂM 2026
+</h2>
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-info">Tổng: {{ total_count }} trường</span>
+                <span class="badge bg-success ms-2">CN Mới: {{ records_cn_moi.count }}</span>
+                <span class="badge bg-warning text-dark ms-2">CN Lại: {{ records_cn_lai.count }}</span>
+            </div>
+            <div>
+                <a href="{% url 'bieu2_import' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-upload"></i> Import
+                </a>
+                <a href="{% url 'bieu2_export' %}" class="btn btn-sm btn-success">
+                    <i class="bi bi-download"></i> Xuất Excel
+                </a>
+                <button class="btn btn-sm btn-danger" onclick="deleteSelected()">
+                    <i class="bi bi-trash"></i> Xóa đã chọn
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bieu2-table-wrapper">
+<table class="table table-bordered bieu2-table">
+<thead>
+<tr>
+<th class="sticky-col col-checkbox"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+<th class="sticky-col col-stt">STT</th>
+<th class="sticky-col col-ward">Phường/Xã</th>
+<th class="sticky-col col-school">Tên trường</th>
+<th>Cấp học</th>
+<th>Loại</th>
+<th>Năm đạt</th>
+<th>Đã kiểm tra</th>
+<th>Dự kiến</th>
+<th>Ghi chú</th>
+<th>Hành động</th>
+</tr>
+</thead>
+<tbody>
+<!-- NHÓM CÔNG NHẬN MỚI -->
+{% if records_cn_moi %}
+<tr class="table-success">
+    <td colspan="11" class="fw-bold py-2">
+        <i class="bi bi-star-fill"></i> CÔNG NHẬN MỚI ({{ records_cn_moi.count }} trường)
+    </td>
+</tr>
+{% for r in records_cn_moi %}
+<tr id="row-{{ r.id }}">
+<td class="sticky-col col-checkbox"><input type="checkbox" class="row-select" value="{{ r.id }}"></td>
+<td class="sticky-col col-stt">{{ r.ward.stt }}</td>
+<td class="sticky-col col-ward">{{ r.ward.don_vi }}</td>
+<td class="sticky-col col-school" contenteditable="true" data-field="ten_truong" title="Click để chỉnh sửa">{{ r.ten_truong }}</td>
+<td contenteditable="true" data-field="cap_hoc" style="min-width: 80px;">{{ r.cap_hoc }}</td>
+<td style="min-width: 70px;"><span class="badge bg-success">CN Mới</span></td>
+<td contenteditable="true" data-field="nam_dat_cqg_gan_nhat" class="text-center" style="min-width: 70px;">{{ r.nam_dat_cqg_gan_nhat|default:'' }}</td>
+<td contenteditable="true" data-field="phuong_xa_da_kiem_tra" style="min-width: 80px;">{{ r.phuong_xa_da_kiem_tra|default:'' }}</td>
+<td contenteditable="true" data-field="du_kien_thang" style="min-width: 80px;">{{ r.du_kien_thang|default:'' }}</td>
+<td contenteditable="true" data-field="ghi_chu" style="min-width: 120px; max-width: 180px;">{{ r.ghi_chu|default:'' }}</td>
+<td style="min-width: 130px; white-space: nowrap;">
+<button class="btn btn-sm btn-success mb-1" onclick="saveRow({{ r.id }})" title="Lưu thay đổi">
+    <i class="bi bi-check-lg"></i> Lưu
+</button>
+<button class="btn btn-sm btn-danger mb-1" onclick="deleteRow({{ r.id }})" title="Xóa dòng này">
+    <i class="bi bi-trash"></i> Xóa
+</button>
+</td>
+</tr>
+{% endfor %}
+{% endif %}
+
+<!-- NHÓM CÔNG NHẬN LẠI -->
+{% if records_cn_lai %}
+<tr class="table-warning">
+    <td colspan="11" class="fw-bold py-2">
+        <i class="bi bi-arrow-repeat"></i> CÔNG NHẬN LẠI ({{ records_cn_lai.count }} trường)
+    </td>
+</tr>
+{% for r in records_cn_lai %}
+<tr id="row-{{ r.id }}">
+<td class="sticky-col col-checkbox"><input type="checkbox" class="row-select" value="{{ r.id }}"></td>
+<td class="sticky-col col-stt">{{ r.ward.stt }}</td>
+<td class="sticky-col col-ward">{{ r.ward.don_vi }}</td>
+<td class="sticky-col col-school" contenteditable="true" data-field="ten_truong" title="Click để chỉnh sửa">{{ r.ten_truong }}</td>
+<td contenteditable="true" data-field="cap_hoc" style="min-width: 80px;">{{ r.cap_hoc }}</td>
+<td style="min-width: 70px;"><span class="badge bg-warning text-dark">CN Lại</span></td>
+<td contenteditable="true" data-field="nam_dat_cqg_gan_nhat" class="text-center" style="min-width: 70px;">{{ r.nam_dat_cqg_gan_nhat|default:'' }}</td>
+<td contenteditable="true" data-field="phuong_xa_da_kiem_tra" style="min-width: 80px;">{{ r.phuong_xa_da_kiem_tra|default:'' }}</td>
+<td contenteditable="true" data-field="du_kien_thang" style="min-width: 80px;">{{ r.du_kien_thang|default:'' }}</td>
+<td contenteditable="true" data-field="ghi_chu" style="min-width: 120px; max-width: 180px;">{{ r.ghi_chu|default:'' }}</td>
+<td style="min-width: 130px; white-space: nowrap;">
+<button class="btn btn-sm btn-success mb-1" onclick="saveRow({{ r.id }})" title="Lưu thay đổi">
+    <i class="bi bi-check-lg"></i> Lưu
+</button>
+<button class="btn btn-sm btn-danger mb-1" onclick="deleteRow({{ r.id }})" title="Xóa dòng này">
+    <i class="bi bi-trash"></i> Xóa
+</button>
+</td>
+</tr>
+{% endfor %}
+{% endif %}
+
+{% if not records_cn_moi and not records_cn_lai %}
+<tr><td colspan="11" class="text-center text-muted py-3">
+    <i class="bi bi-inbox"></i> Chưa có dữ liệu
+</td></tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+</div>
+
+<script>
+function getCookie(name) {
+    let value = `; ${document.cookie}`;
+    let parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function toggleAll(checkbox) {
+    document.querySelectorAll('.row-select').forEach(cb => cb.checked = checkbox.checked);
+}
+
+function saveRow(id) {
+    const row = document.getElementById(`row-${id}`);
+    const data = {
+        ten_truong: row.querySelector('[data-field="ten_truong"]').textContent.trim(),
+        cap_hoc: row.querySelector('[data-field="cap_hoc"]').textContent.trim(),
+        nam_dat_cqg_gan_nhat: row.querySelector('[data-field="nam_dat_cqg_gan_nhat"]').textContent.trim(),
+        phuong_xa_da_kiem_tra: row.querySelector('[data-field="phuong_xa_da_kiem_tra"]').textContent.trim(),
+        du_kien_thang: row.querySelector('[data-field="du_kien_thang"]').textContent.trim(),
+        ghi_chu: row.querySelector('[data-field="ghi_chu"]').textContent.trim(),
+    };
+    
+    const saveBtn = event.target.closest('button');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+    saveBtn.disabled = true;
+    
+    fetch(`/bieu2/update/${id}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(data => {
+        if(data.status === 'success') {
+            row.style.backgroundColor = '#d4edda';
+            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Đã lưu!';
+            setTimeout(() => {
+                row.style.backgroundColor = '';
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }, 2000);
+        } else {
+            alert('Lỗi: ' + (data.message || 'Không thể lưu'));
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }).catch(err => {
+        alert('Lỗi kết nối: ' + err);
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+function deleteRow(id) {
+    if(!confirm('Xác nhận xóa trường này?')) return;
+    fetch(`/bieu2/delete/${id}/`, {
+        method: 'POST',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    }).then(() => {
+        const row = document.getElementById(`row-${id}`);
+        row.style.backgroundColor = '#f8d7da';
+        setTimeout(() => row.remove(), 300);
+    }).catch(err => alert('Lỗi: ' + err));
+}
+
+function deleteSelected() {
+    const selected = Array.from(document.querySelectorAll('.row-select:checked')).map(cb => cb.value);
+    if(selected.length === 0) {
+        alert('Vui lòng chọn ít nhất 1 dòng để xóa!');
+        return;
+    }
+    if(!confirm(`Xác nhận xóa ${selected.length} trường đã chọn?`)) return;
+    
+    fetch('/bieu2/delete-multiple/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({ids: selected})
+    }).then(r => r.json()).then(data => {
+        selected.forEach(id => {
+            const row = document.getElementById(`row-${id}`);
+            if(row) {
+                row.style.backgroundColor = '#f8d7da';
+                setTimeout(() => row.remove(), 300);
+            }
+        });
+        setTimeout(() => {
+            alert(`Đã xóa ${data.deleted} trường!`);
+            document.getElementById('selectAll').checked = false;
+        }, 400);
+    }).catch(err => alert('Lỗi: ' + err));
+}
+
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const focusedCell = document.activeElement;
+        if (focusedCell.hasAttribute('contenteditable')) {
+            const row = focusedCell.closest('tr');
+            if (row && row.id.startsWith('row-')) {
+                const id = row.id.replace('row-', '');
+                saveRow(id);
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

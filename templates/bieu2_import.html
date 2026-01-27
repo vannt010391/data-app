@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Import Biểu 2{% endblock %}
+{% block content %}
+<h2>Import Biểu 2 từ Excel</h2>
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+<div class="mb-3">
+<label>Chọn phường/xã</label>
+<select class="form-select" name="ward_id" required>
+<option value="">-- Chọn --</option>
+{% for ward in wards %}<option value="{{ ward.id }}">{{ ward.stt }}. {{ ward.don_vi }}</option>{% endfor %}
+</select>
+</div>
+<div class="mb-3">
+<label>File Excel</label>
+<input type="file" class="form-control" name="excel_file" accept=".xlsx,.xls" required>
+</div>
+<button type="submit" class="btn btn-primary">Import</button>
+<a href="{% url 'bieu2_list' %}" class="btn btn-secondary">Quay lại</a>
+</form>
+{% endblock %}

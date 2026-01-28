@@ -86,7 +86,14 @@
                 <span class="badge bg-success ms-2">Công nhận mới</span>
                 <span class="badge bg-warning text-dark">Công nhận lại</span>
             </div>
-            <div>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchWard" placeholder="Tìm phường/xã..." onkeyup="filterTable()">
+                </div>
+                <button class="btn btn-sm btn-success" onclick="openAddModal()">
+                    <i class="bi bi-plus-lg"></i> Thêm dòng
+                </button>
                 <a href="{% url 'bieu3_import' %}" class="btn btn-sm btn-primary">
                     <i class="bi bi-upload"></i> Import
                 </a>
@@ -116,6 +123,11 @@
 <th colspan="5" class="text-center cn-lai-header">Công nhận lại</th>
 <th rowspan="2">Ghi chú</th>
 <th rowspan="2">Hành động</th>
+<th rowspan="2" style="width: 40px; text-align: center;">
+    <button class="btn btn-sm btn-outline-success" onclick="addNewRow('bieu3-tbody')" title="Thêm dòng trống mới">
+        <i class="bi bi-plus"></i>
+    </button>
+</th>
 </tr>
 <tr>
 <th class="cn-moi-header">2026</th>
@@ -130,7 +142,7 @@
 <th class="cn-lai-header">2030</th>
 </tr>
 </thead>
-<tbody>
+<tbody id="bieu3-tbody">
 {% for r in records %}
 <tr id="row-{{ r.id }}">
 <td class="sticky-col col-checkbox"><input type="checkbox" class="row-select" value="{{ r.id }}"></td>
@@ -179,6 +191,31 @@ function getCookie(name) {
 
 function toggleAll(checkbox) {
     document.querySelectorAll('.row-select').forEach(cb => cb.checked = checkbox.checked);
+}
+
+function filterTable() {
+    const searchValue = document.getElementById('searchWard').value.toLowerCase();
+    const tbody = document.getElementById('bieu3-tbody');
+    const rows = tbody.getElementsByTagName('tr');
+    let visibleCount = 0;
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        
+        // Get ward cell (3rd column, index 2)
+        const wardCell = row.cells[2];
+        if (wardCell) {
+            const wardText = wardCell.textContent || wardCell.innerText;
+            if (wardText.toLowerCase().indexOf(searchValue) > -1) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }
+    
+    console.log('Filtered to ' + visibleCount + ' rows');
 }
 
 function saveRow(id) {
@@ -270,6 +307,140 @@ function deleteSelected() {
     }).catch(err => alert('Lỗi: ' + err));
 }
 
+// Thêm dòng mới trực tiếp trên bảng
+let newRowCounter = 0;
+function addNewRow(tbodyId) {
+    const tbody = document.getElementById(tbodyId);
+    const newRowId = 'new-row-' + (++newRowCounter);
+    
+    // Lấy danh sách phường/xã từ API
+    fetch('/api/wards/', {
+        method: 'GET',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    }).then(r => r.json()).then(wards => {
+        const wardOptions = wards.map(w => `<option value="${w.id}">${w.stt}. ${w.don_vi}</option>`).join('');
+        
+        const yearCells = ['2026', '2027', '2028', '2029', '2030']
+            .map(year => `<td contenteditable="true" data-field="cn_moi_${year}" class="text-center" style="min-width: 60px; cursor: text;">---</td>`)
+            .join('');
+        const yearCellsLai = ['2026', '2027', '2028', '2029', '2030']
+            .map(year => `<td contenteditable="true" data-field="cn_lai_${year}" class="text-center" style="min-width: 60px; cursor: text;">---</td>`)
+            .join('');
+        
+        const newRow = document.createElement('tr');
+        newRow.id = newRowId;
+        newRow.className = 'table-info';
+        newRow.style.backgroundColor = '#e7f3ff';
+        newRow.innerHTML = `
+            <td class="sticky-col col-checkbox"><input type="checkbox" class="row-select" value=""></td>
+            <td class="sticky-col col-stt">---</td>
+            <td class="sticky-col col-ward">
+                <select data-field="ward" style="width:100%; padding: 0.25rem 0.5rem; font-size: 0.875rem;" required>
+                    <option value="">Chọn phường/xã</option>
+                    ${wardOptions}
+                </select>
+            </td>
+            <td class="sticky-col col-school" contenteditable="true" data-field="ten_truong" style="cursor: text; min-width: 100px;" title="Nhập tên trường">---</td>
+            <td contenteditable="true" data-field="cap_hoc" style="min-width: 80px; cursor: text;">---</td>
+            <td contenteditable="true" data-field="loai_hinh" style="min-width: 80px; cursor: text;">---</td>
+            <td contenteditable="true" data-field="nam_dat_cqg_gan_nhat" style="min-width: 70px; cursor: text;">---</td>
+            ${yearCells}
+            ${yearCellsLai}
+            <td contenteditable="true" data-field="ghi_chu" style="min-width: 120px; max-width: 180px; cursor: text;">---</td>
+            <td style="min-width: 140px; white-space: nowrap;">
+                <button class="btn btn-sm btn-success mb-1" onclick="saveNewRow('${newRowId}')" title="Lưu dòng mới">
+                    <i class="bi bi-check-lg"></i> Lưu
+                </button>
+                <button class="btn btn-sm btn-secondary mb-1" onclick="cancelNewRow('${newRowId}')" title="Hủy">
+                    <i class="bi bi-x-lg"></i> Hủy
+                </button>
+            </td>
+        `;
+        
+        // Insert vào cuối tbody
+        tbody.appendChild(newRow);
+        
+        // Focus vào trường tên trường để user bắt đầu nhập
+        setTimeout(() => {
+            newRow.querySelector('[data-field="ten_truong"]').focus();
+        }, 100);
+    }).catch(err => {
+        alert('Lỗi khi tải danh sách phường/xã: ' + err);
+    });
+}
+
+function saveNewRow(newRowId) {
+    const row = document.getElementById(newRowId);
+    const tenTruong = row.querySelector('[data-field="ten_truong"]').textContent.trim();
+    const wardSelect = row.querySelector('select[data-field="ward"]');
+    const wardId = wardSelect ? wardSelect.value : null;
+    
+    if (!tenTruong || tenTruong === '---') {
+        alert('Vui lòng nhập Tên trường!');
+        return;
+    }
+    
+    if (!wardId || wardId === '') {
+        alert('Vui lòng chọn Phường/Xã!');
+        return;
+    }
+    
+    const data = {
+        ward_id: parseInt(wardId),
+        ten_truong: tenTruong,
+        cap_hoc: row.querySelector('[data-field="cap_hoc"]').textContent.trim().replace(/^---$/, ''),
+        loai_hinh: row.querySelector('[data-field="loai_hinh"]').textContent.trim().replace(/^---$/, ''),
+        nam_dat_cqg_gan_nhat: row.querySelector('[data-field="nam_dat_cqg_gan_nhat"]').textContent.trim().replace(/^---$/, ''),
+        cn_moi_2026: row.querySelector('[data-field="cn_moi_2026"]').textContent.trim().replace(/^---$/, ''),
+        cn_moi_2027: row.querySelector('[data-field="cn_moi_2027"]').textContent.trim().replace(/^---$/, ''),
+        cn_moi_2028: row.querySelector('[data-field="cn_moi_2028"]').textContent.trim().replace(/^---$/, ''),
+        cn_moi_2029: row.querySelector('[data-field="cn_moi_2029"]').textContent.trim().replace(/^---$/, ''),
+        cn_moi_2030: row.querySelector('[data-field="cn_moi_2030"]').textContent.trim().replace(/^---$/, ''),
+        cn_lai_2026: row.querySelector('[data-field="cn_lai_2026"]').textContent.trim().replace(/^---$/, ''),
+        cn_lai_2027: row.querySelector('[data-field="cn_lai_2027"]').textContent.trim().replace(/^---$/, ''),
+        cn_lai_2028: row.querySelector('[data-field="cn_lai_2028"]').textContent.trim().replace(/^---$/, ''),
+        cn_lai_2029: row.querySelector('[data-field="cn_lai_2029"]').textContent.trim().replace(/^---$/, ''),
+        cn_lai_2030: row.querySelector('[data-field="cn_lai_2030"]').textContent.trim().replace(/^---$/, ''),
+        ghi_chu: row.querySelector('[data-field="ghi_chu"]').textContent.trim().replace(/^---$/, ''),
+    };
+    
+    const saveBtn = row.querySelector('button:first-child');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+    saveBtn.disabled = true;
+    
+    fetch('/bieu3/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(resp => {
+        if (resp.status === 'success') {
+            row.style.backgroundColor = '#d4edda';
+            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Đã lưu!';
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Lỗi: ' + (resp.message || 'Không thể lưu'));
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }).catch(err => {
+        alert('Lỗi kết nối: ' + err);
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+function cancelNewRow(newRowId) {
+    const row = document.getElementById(newRowId);
+    row.style.backgroundColor = '#f8d7da';
+    setTimeout(() => row.remove(), 300);
+}
+
 // Add keyboard shortcuts
 document.addEventListener('keydown', function(e) {
     // Ctrl/Cmd + S to save current focused row
@@ -281,9 +452,223 @@ document.addEventListener('keydown', function(e) {
             if (row && row.id.startsWith('row-')) {
                 const id = row.id.replace('row-', '');
                 saveRow(id);
+            } else if (row && row.id.startsWith('new-row-')) {
+                saveNewRow(row.id);
             }
         }
     }
 });
+</script>
+
+<!-- Modal thêm dòng mới -->
+<div class="modal fade" id="addBieu3Modal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm dòng dữ liệu - Biểu 3</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <form id="formAddBieu3">
+                    <h6 class="mb-3 fw-bold">Thông tin cơ bản</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phường/Xã <span class="text-danger">*</span></label>
+                                <select class="form-select" id="ward_id" required>
+                                    <option value="">Chọn phường/xã</option>
+                                    {% for w in wards %}
+                                    <option value="{{ w.id }}">{{ w.stt }}. {{ w.don_vi }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tên trường <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ten_truong" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Cấp học</label>
+                                <input type="text" class="form-control" id="cap_hoc">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Loại hình</label>
+                                <input type="text" class="form-control" id="loai_hinh">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Năm đạt CQG</label>
+                                <input type="text" class="form-control" id="nam_dat_cqg_gan_nhat">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3 fw-bold">Công nhận mới (2026-2030)</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2026</label>
+                                <input type="text" class="form-control" id="cn_moi_2026">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2027</label>
+                                <input type="text" class="form-control" id="cn_moi_2027">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2028</label>
+                                <input type="text" class="form-control" id="cn_moi_2028">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2029</label>
+                                <input type="text" class="form-control" id="cn_moi_2029">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2030</label>
+                                <input type="text" class="form-control" id="cn_moi_2030">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3 fw-bold">Công nhận lại (2026-2030)</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2026</label>
+                                <input type="text" class="form-control" id="cn_lai_2026">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2027</label>
+                                <input type="text" class="form-control" id="cn_lai_2027">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2028</label>
+                                <input type="text" class="form-control" id="cn_lai_2028">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2029</label>
+                                <input type="text" class="form-control" id="cn_lai_2029">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Năm 2030</label>
+                                <input type="text" class="form-control" id="cn_lai_2030">
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" id="ghi_chu" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitAddBieu3()">
+                    <i class="bi bi-check-lg"></i> Thêm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAddModal() {
+    document.getElementById('formAddBieu3').reset();
+    const modal = new bootstrap.Modal(document.getElementById('addBieu3Modal'));
+    modal.show();
+}
+
+function submitAddBieu3() {
+    const wardId = document.getElementById('ward_id').value;
+    const tenTruong = document.getElementById('ten_truong').value;
+    
+    if (!wardId || !tenTruong) {
+        alert('Vui lòng nhập Phường/Xã và Tên trường');
+        return;
+    }
+    
+    const data = {
+        ward_id: parseInt(wardId),
+        ten_truong: tenTruong,
+        cap_hoc: document.getElementById('cap_hoc').value,
+        loai_hinh: document.getElementById('loai_hinh').value,
+        nam_dat_cqg_gan_nhat: document.getElementById('nam_dat_cqg_gan_nhat').value,
+        cn_moi_2026: document.getElementById('cn_moi_2026').value,
+        cn_moi_2027: document.getElementById('cn_moi_2027').value,
+        cn_moi_2028: document.getElementById('cn_moi_2028').value,
+        cn_moi_2029: document.getElementById('cn_moi_2029').value,
+        cn_moi_2030: document.getElementById('cn_moi_2030').value,
+        cn_lai_2026: document.getElementById('cn_lai_2026').value,
+        cn_lai_2027: document.getElementById('cn_lai_2027').value,
+        cn_lai_2028: document.getElementById('cn_lai_2028').value,
+        cn_lai_2029: document.getElementById('cn_lai_2029').value,
+        cn_lai_2030: document.getElementById('cn_lai_2030').value,
+        ghi_chu: document.getElementById('ghi_chu').value,
+    };
+    
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang thêm...';
+    
+    fetch('/bieu3/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(resp => {
+        if (resp.status === 'success') {
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Thêm thành công!';
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('addBieu3Modal')).hide();
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Lỗi: ' + (resp.message || 'Không thể thêm dòng'));
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Thêm';
+        }
+    }).catch(err => {
+        alert('Lỗi kết nối: ' + err);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Thêm';
+    });
+}
 </script>
 {% endblock %}

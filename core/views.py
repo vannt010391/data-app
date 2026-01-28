@@ -192,6 +192,28 @@ def bieu2_import(request):
     return render(request, 'bieu2_import.html', {'wards': wards})
 
 
+def bieu2_add(request):
+    """Thêm record Biểu 2"""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        ward = Ward.objects.get(id=data.get('ward_id'))
+        
+        Bieu2KH2026.objects.create(
+            ward=ward,
+            phuong_xa=ward.don_vi,
+            ten_truong=data.get('ten_truong', ''),
+            cap_hoc=data.get('cap_hoc', ''),
+            loai_hinh=data.get('loai_hinh', ''),
+            nam_dat_cqg_gan_nhat=data.get('nam_dat_cqg_gan_nhat', ''),
+            phuong_xa_da_kiem_tra=data.get('phuong_xa_da_kiem_tra', ''),
+            du_kien_thang=data.get('du_kien_thang', ''),
+            ghi_chu=data.get('ghi_chu', ''),
+            loai_cong_nhan=data.get('loai_cong_nhan', 'CN_LAI'),
+            source='manual'
+        )
+        return JsonResponse({'status': 'success'})
+
+
 def bieu2_update(request, pk):
     """Cập nhật Biểu 2"""
     if request.method == 'POST':
@@ -264,6 +286,35 @@ def bieu3_import(request):
     return render(request, 'bieu3_import.html', {'wards': wards})
 
 
+def bieu3_add(request):
+    """Thêm record Biểu 3"""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        ward = Ward.objects.get(id=data.get('ward_id'))
+        
+        Bieu3KH20262030.objects.create(
+            ward=ward,
+            phuong_xa=ward.don_vi,
+            ten_truong=data.get('ten_truong', ''),
+            cap_hoc=data.get('cap_hoc', ''),
+            loai_hinh=data.get('loai_hinh', ''),
+            nam_dat_cqg_gan_nhat=data.get('nam_dat_cqg_gan_nhat', ''),
+            cn_moi_2026=data.get('cn_moi_2026', ''),
+            cn_moi_2027=data.get('cn_moi_2027', ''),
+            cn_moi_2028=data.get('cn_moi_2028', ''),
+            cn_moi_2029=data.get('cn_moi_2029', ''),
+            cn_moi_2030=data.get('cn_moi_2030', ''),
+            cn_lai_2026=data.get('cn_lai_2026', ''),
+            cn_lai_2027=data.get('cn_lai_2027', ''),
+            cn_lai_2028=data.get('cn_lai_2028', ''),
+            cn_lai_2029=data.get('cn_lai_2029', ''),
+            cn_lai_2030=data.get('cn_lai_2030', ''),
+            ghi_chu=data.get('ghi_chu', ''),
+            source='manual'
+        )
+        return JsonResponse({'status': 'success'})
+
+
 def bieu3_update(request, pk):
     """Cập nhật Biểu 3"""
     if request.method == 'POST':
@@ -320,6 +371,9 @@ def bieu4_list(request):
         cn_moi = Bieu1KQ2025.objects.filter(ward=ward, loai_cong_nhan='CN_MOI').count()
         cn_lai = Bieu1KQ2025.objects.filter(ward=ward, loai_cong_nhan='CN_LAI').count()
         
+        # Tạo ghi chú "Không có" nếu không có dữ liệu
+        ghi_chu = 'Không có' if (cn_moi == 0 and cn_lai == 0) else ''
+        
         Bieu4CTThanhPho.objects.update_or_create(
             ward=ward,
             defaults={
@@ -327,6 +381,7 @@ def bieu4_list(request):
                 'don_vi': ward.don_vi,
                 'cong_nhan_moi': cn_moi,
                 'cong_nhan_lai': cn_lai,
+                'ghi_chu': ghi_chu,
                 'loai': 'PHUONG' if ward.loai == 'phuong' else 'XA'
             }
         )
@@ -337,3 +392,11 @@ def bieu4_list(request):
 
 def bieu4_export(request):
     return export_bieu4_tonghop()
+
+
+# ============= API ENDPOINTS =============
+def api_wards(request):
+    """API để lấy danh sách phường/xã (JSON)"""
+    wards = Ward.objects.all().order_by('stt')
+    data = [{'id': w.id, 'stt': w.stt, 'don_vi': w.don_vi} for w in wards]
+    return JsonResponse(data, safe=False)

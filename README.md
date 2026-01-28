@@ -14,6 +14,7 @@
 - Import dữ liệu từ file Excel đơn vị
 - Hiển thị và chỉnh sửa dữ liệu tổng hợp trực tiếp trên web
 - Xuất file Excel tổng hợp đúng format biểu mẫu gốc
+- **Thêm dòng mới trực tiếp trên bảng** - Click nút "+", nhập thông tin, click Lưu (xem [INLINE_ROW_ADDITION.md](./INLINE_ROW_ADDITION.md))
 
 ## Cài đặt và Chạy
 

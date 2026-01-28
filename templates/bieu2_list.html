@@ -69,7 +69,14 @@
                 <span class="badge bg-success ms-2">CN Mới: {{ records_cn_moi.count }}</span>
                 <span class="badge bg-warning text-dark ms-2">CN Lại: {{ records_cn_lai.count }}</span>
             </div>
-            <div>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchWard" placeholder="Tìm phường/xã..." onkeyup="filterTable()">
+                </div>
+                <button class="btn btn-sm btn-success" onclick="openAddModal()">
+                    <i class="bi bi-plus-lg"></i> Thêm dòng
+                </button>
                 <a href="{% url 'bieu2_import' %}" class="btn btn-sm btn-primary">
                     <i class="bi bi-upload"></i> Import
                 </a>
@@ -93,19 +100,25 @@
 <th class="sticky-col col-ward">Phường/Xã</th>
 <th class="sticky-col col-school">Tên trường</th>
 <th>Cấp học</th>
+<th>Loại hình</th>
 <th>Loại</th>
 <th>Năm đạt</th>
 <th>Đã kiểm tra</th>
 <th>Dự kiến</th>
 <th>Ghi chú</th>
 <th>Hành động</th>
+<th style="width: 40px; text-align: center;">
+    <button class="btn btn-sm btn-outline-success" onclick="addNewRow('bieu2-tbody')" title="Thêm dòng trống mới">
+        <i class="bi bi-plus"></i>
+    </button>
+</th>
 </tr>
 </thead>
-<tbody>
+<tbody id="bieu2-tbody">
 <!-- NHÓM CÔNG NHẬN MỚI -->
 {% if records_cn_moi %}
 <tr class="table-success">
-    <td colspan="11" class="fw-bold py-2">
+    <td colspan="12" class="fw-bold py-2">
         <i class="bi bi-star-fill"></i> CÔNG NHẬN MỚI ({{ records_cn_moi.count }} trường)
     </td>
 </tr>
@@ -116,6 +129,7 @@
 <td class="sticky-col col-ward">{{ r.ward.don_vi }}</td>
 <td class="sticky-col col-school" contenteditable="true" data-field="ten_truong" title="Click để chỉnh sửa">{{ r.ten_truong }}</td>
 <td contenteditable="true" data-field="cap_hoc" style="min-width: 80px;">{{ r.cap_hoc }}</td>
+<td contenteditable="true" data-field="loai_hinh" style="min-width: 80px;">{{ r.loai_hinh }}</td>
 <td style="min-width: 70px;"><span class="badge bg-success">CN Mới</span></td>
 <td contenteditable="true" data-field="nam_dat_cqg_gan_nhat" class="text-center" style="min-width: 70px;">{{ r.nam_dat_cqg_gan_nhat|default:'' }}</td>
 <td contenteditable="true" data-field="phuong_xa_da_kiem_tra" style="min-width: 80px;">{{ r.phuong_xa_da_kiem_tra|default:'' }}</td>
@@ -136,7 +150,7 @@
 <!-- NHÓM CÔNG NHẬN LẠI -->
 {% if records_cn_lai %}
 <tr class="table-warning">
-    <td colspan="11" class="fw-bold py-2">
+    <td colspan="12" class="fw-bold py-2">
         <i class="bi bi-arrow-repeat"></i> CÔNG NHẬN LẠI ({{ records_cn_lai.count }} trường)
     </td>
 </tr>
@@ -147,6 +161,7 @@
 <td class="sticky-col col-ward">{{ r.ward.don_vi }}</td>
 <td class="sticky-col col-school" contenteditable="true" data-field="ten_truong" title="Click để chỉnh sửa">{{ r.ten_truong }}</td>
 <td contenteditable="true" data-field="cap_hoc" style="min-width: 80px;">{{ r.cap_hoc }}</td>
+<td contenteditable="true" data-field="loai_hinh" style="min-width: 80px;">{{ r.loai_hinh }}</td>
 <td style="min-width: 70px;"><span class="badge bg-warning text-dark">CN Lại</span></td>
 <td contenteditable="true" data-field="nam_dat_cqg_gan_nhat" class="text-center" style="min-width: 70px;">{{ r.nam_dat_cqg_gan_nhat|default:'' }}</td>
 <td contenteditable="true" data-field="phuong_xa_da_kiem_tra" style="min-width: 80px;">{{ r.phuong_xa_da_kiem_tra|default:'' }}</td>
@@ -165,7 +180,7 @@
 {% endif %}
 
 {% if not records_cn_moi and not records_cn_lai %}
-<tr><td colspan="11" class="text-center text-muted py-3">
+<tr><td colspan="12" class="text-center text-muted py-3">
     <i class="bi bi-inbox"></i> Chưa có dữ liệu
 </td></tr>
 {% endif %}
@@ -185,11 +200,41 @@ function toggleAll(checkbox) {
     document.querySelectorAll('.row-select').forEach(cb => cb.checked = checkbox.checked);
 }
 
+function filterTable() {
+    const searchValue = document.getElementById('searchWard').value.toLowerCase();
+    const tbody = document.getElementById('bieu2-tbody');
+    const rows = tbody.getElementsByTagName('tr');
+    let visibleCount = 0;
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        // Skip header rows (colspan)
+        if (row.cells[0] && row.cells[0].hasAttribute('colspan')) {
+            continue;
+        }
+        
+        // Get ward cell (3rd column, index 2)
+        const wardCell = row.cells[2];
+        if (wardCell) {
+            const wardText = wardCell.textContent || wardCell.innerText;
+            if (wardText.toLowerCase().indexOf(searchValue) > -1) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }
+    
+    console.log('Filtered to ' + visibleCount + ' rows');
+}
+
 function saveRow(id) {
     const row = document.getElementById(`row-${id}`);
     const data = {
         ten_truong: row.querySelector('[data-field="ten_truong"]').textContent.trim(),
         cap_hoc: row.querySelector('[data-field="cap_hoc"]').textContent.trim(),
+        loai_hinh: row.querySelector('[data-field="loai_hinh"]').textContent.trim(),
         nam_dat_cqg_gan_nhat: row.querySelector('[data-field="nam_dat_cqg_gan_nhat"]').textContent.trim(),
         phuong_xa_da_kiem_tra: row.querySelector('[data-field="phuong_xa_da_kiem_tra"]').textContent.trim(),
         du_kien_thang: row.querySelector('[data-field="du_kien_thang"]').textContent.trim(),
@@ -271,6 +316,132 @@ function deleteSelected() {
     }).catch(err => alert('Lỗi: ' + err));
 }
 
+// Thêm dòng mới trực tiếp trên bảng
+let newRowCounter = 0;
+function addNewRow(tbodyId) {
+    const tbody = document.getElementById(tbodyId);
+    const newRowId = 'new-row-' + (++newRowCounter);
+    
+    // Lấy danh sách phường/xã từ API
+    fetch('/api/wards/', {
+        method: 'GET',
+        headers: {'X-CSRFToken': getCookie('csrftoken')}
+    }).then(r => r.json()).then(wards => {
+        const wardOptions = wards.map(w => `<option value="${w.id}">${w.stt}. ${w.don_vi}</option>`).join('');
+        
+        const newRow = document.createElement('tr');
+        newRow.id = newRowId;
+        newRow.className = 'table-info';
+        newRow.style.backgroundColor = '#e7f3ff';
+        newRow.innerHTML = `
+            <td class="sticky-col col-checkbox"><input type="checkbox" class="row-select" value=""></td>
+            <td class="sticky-col col-stt">---</td>
+            <td class="sticky-col col-ward">
+                <select data-field="ward" style="width:100%; padding: 0.25rem 0.5rem; font-size: 0.875rem;" required>
+                    <option value="">Chọn phường/xã</option>
+                    ${wardOptions}
+                </select>
+            </td>
+            <td class="sticky-col col-school" contenteditable="true" data-field="ten_truong" style="cursor: text; min-width: 100px;" title="Nhập tên trường">---</td>
+            <td contenteditable="true" data-field="cap_hoc" style="min-width: 80px; cursor: text;">---</td>
+            <td contenteditable="true" data-field="loai_hinh" style="min-width: 80px; cursor: text;">---</td>
+            <td style="min-width: 70px;">
+                <select data-field="loai_cong_nhan" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">
+                    <option value="CN_MOI">CN Mới</option>
+                    <option value="CN_LAI">CN Lại</option>
+                </select>
+            </td>
+            <td contenteditable="true" data-field="nam_dat_cqg_gan_nhat" class="text-center" style="min-width: 70px; cursor: text;">---</td>
+            <td contenteditable="true" data-field="phuong_xa_da_kiem_tra" class="text-center" style="min-width: 80px; cursor: text;">---</td>
+            <td contenteditable="true" data-field="du_kien_thang" class="text-center" style="min-width: 80px; cursor: text;">---</td>
+            <td contenteditable="true" data-field="ghi_chu" style="min-width: 120px; max-width: 180px; cursor: text;">---</td>
+            <td style="min-width: 140px; white-space: nowrap;">
+                <button class="btn btn-sm btn-success mb-1" onclick="saveNewRow('${newRowId}')" title="Lưu dòng mới">
+                    <i class="bi bi-check-lg"></i> Lưu
+                </button>
+                <button class="btn btn-sm btn-secondary mb-1" onclick="cancelNewRow('${newRowId}')" title="Hủy">
+                    <i class="bi bi-x-lg"></i> Hủy
+                </button>
+            </td>
+        `;
+        
+        // Insert vào cuối tbody
+        tbody.appendChild(newRow);
+        
+        // Focus vào trường tên trường để user bắt đầu nhập
+        setTimeout(() => {
+            newRow.querySelector('[data-field="ten_truong"]').focus();
+        }, 100);
+    }).catch(err => {
+        alert('Lỗi khi tải danh sách phường/xã: ' + err);
+    });
+}
+
+function saveNewRow(newRowId) {
+    const row = document.getElementById(newRowId);
+    const tenTruong = row.querySelector('[data-field="ten_truong"]').textContent.trim();
+    const wardSelect = row.querySelector('select[data-field="ward"]');
+    const wardId = wardSelect ? wardSelect.value : null;
+    
+    if (!tenTruong || tenTruong === '---') {
+        alert('Vui lòng nhập Tên trường!');
+        return;
+    }
+    
+    if (!wardId || wardId === '') {
+        alert('Vui lòng chọn Phường/Xã!');
+        return;
+    }
+    
+    const data = {
+        ward_id: parseInt(wardId),
+        ten_truong: tenTruong,
+        cap_hoc: row.querySelector('[data-field="cap_hoc"]').textContent.trim().replace(/^---$/, ''),
+        loai_hinh: row.querySelector('[data-field="loai_hinh"]').textContent.trim().replace(/^---$/, ''),
+        loai_cong_nhan: row.querySelector('select[data-field="loai_cong_nhan"]').value,
+        nam_dat_cqg_gan_nhat: row.querySelector('[data-field="nam_dat_cqg_gan_nhat"]').textContent.trim().replace(/^---$/, ''),
+        phuong_xa_da_kiem_tra: row.querySelector('[data-field="phuong_xa_da_kiem_tra"]').textContent.trim().replace(/^---$/, ''),
+        du_kien_thang: row.querySelector('[data-field="du_kien_thang"]').textContent.trim().replace(/^---$/, ''),
+        ghi_chu: row.querySelector('[data-field="ghi_chu"]').textContent.trim().replace(/^---$/, ''),
+    };
+    
+    const saveBtn = row.querySelector('button:first-child');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+    saveBtn.disabled = true;
+    
+    fetch('/bieu2/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(resp => {
+        if (resp.status === 'success') {
+            row.style.backgroundColor = '#d4edda';
+            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Đã lưu!';
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Lỗi: ' + (resp.message || 'Không thể lưu'));
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }).catch(err => {
+        alert('Lỗi kết nối: ' + err);
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+function cancelNewRow(newRowId) {
+    const row = document.getElementById(newRowId);
+    row.style.backgroundColor = '#f8d7da';
+    setTimeout(() => row.remove(), 300);
+}
+
 document.addEventListener('keydown', function(e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
@@ -280,9 +451,158 @@ document.addEventListener('keydown', function(e) {
             if (row && row.id.startsWith('row-')) {
                 const id = row.id.replace('row-', '');
                 saveRow(id);
+            } else if (row && row.id.startsWith('new-row-')) {
+                saveNewRow();
             }
         }
     }
 });
+</script>
+
+<!-- Modal thêm dòng mới -->
+<div class="modal fade" id="addBieu2Modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm dòng dữ liệu - Biểu 2</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formAddBieu2">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Phường/Xã <span class="text-danger">*</span></label>
+                                <select class="form-select" id="ward_id" required>
+                                    <option value="">Chọn phường/xã</option>
+                                    {% for w in wards %}
+                                    <option value="{{ w.id }}">{{ w.stt }}. {{ w.don_vi }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Tên trường <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="ten_truong" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Cấp học</label>
+                                <input type="text" class="form-control" id="cap_hoc">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Loại hình</label>
+                                <input type="text" class="form-control" id="loai_hinh">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Loại công nhận</label>
+                                <select class="form-select" id="loai_cong_nhan">
+                                    <option value="CN_MOI">Công nhận mới</option>
+                                    <option value="CN_LAI">Công nhận lại</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Năm đạt CQG</label>
+                                <input type="text" class="form-control" id="nam_dat_cqg_gan_nhat">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Đã kiểm tra</label>
+                                <input type="text" class="form-control" id="phuong_xa_da_kiem_tra">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Dự kiến tháng</label>
+                                <input type="text" class="form-control" id="du_kien_thang">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ghi chú</label>
+                        <textarea class="form-control" id="ghi_chu" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitAddBieu2()">
+                    <i class="bi bi-check-lg"></i> Thêm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAddModal() {
+    document.getElementById('formAddBieu2').reset();
+    const modal = new bootstrap.Modal(document.getElementById('addBieu2Modal'));
+    modal.show();
+}
+
+function submitAddBieu2() {
+    const wardId = document.getElementById('ward_id').value;
+    const tenTruong = document.getElementById('ten_truong').value;
+    
+    if (!wardId || !tenTruong) {
+        alert('Vui lòng nhập Phường/Xã và Tên trường');
+        return;
+    }
+    
+    const data = {
+        ward_id: parseInt(wardId),
+        ten_truong: tenTruong,
+        cap_hoc: document.getElementById('cap_hoc').value,
+        loai_hinh: document.getElementById('loai_hinh').value,
+        loai_cong_nhan: document.getElementById('loai_cong_nhan').value,
+        nam_dat_cqg_gan_nhat: document.getElementById('nam_dat_cqg_gan_nhat').value,
+        phuong_xa_da_kiem_tra: document.getElementById('phuong_xa_da_kiem_tra').value,
+        du_kien_thang: document.getElementById('du_kien_thang').value,
+        ghi_chu: document.getElementById('ghi_chu').value,
+    };
+    
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang thêm...';
+    
+    fetch('/bieu2/add/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(resp => {
+        if (resp.status === 'success') {
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Thêm thành công!';
+            setTimeout(() => {
+                bootstrap.Modal.getInstance(document.getElementById('addBieu2Modal')).hide();
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Lỗi: ' + (resp.message || 'Không thể thêm dòng'));
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg"></i> Thêm';
+        }
+    }).catch(err => {
+        alert('Lỗi kết nối: ' + err);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-lg"></i> Thêm';
+    });
+}
 </script>
 {% endblock %}

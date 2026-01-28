@@ -19,6 +19,7 @@ urlpatterns = [
     # Biểu 2
     path('bieu2/', views.bieu2_list, name='bieu2_list'),
     path('bieu2/import/', views.bieu2_import, name='bieu2_import'),
+    path('bieu2/add/', views.bieu2_add, name='bieu2_add'),
     path('bieu2/update/<int:pk>/', views.bieu2_update, name='bieu2_update'),
     path('bieu2/delete/<int:pk>/', views.bieu2_delete, name='bieu2_delete'),
     path('bieu2/delete-multiple/', views.bieu2_delete_multiple, name='bieu2_delete_multiple'),
@@ -27,6 +28,7 @@ urlpatterns = [
     # Biểu 3
     path('bieu3/', views.bieu3_list, name='bieu3_list'),
     path('bieu3/import/', views.bieu3_import, name='bieu3_import'),
+    path('bieu3/add/', views.bieu3_add, name='bieu3_add'),
     path('bieu3/update/<int:pk>/', views.bieu3_update, name='bieu3_update'),
     path('bieu3/delete/<int:pk>/', views.bieu3_delete, name='bieu3_delete'),
     path('bieu3/delete-multiple/', views.bieu3_delete_multiple, name='bieu3_delete_multiple'),
@@ -35,4 +37,7 @@ urlpatterns = [
     # Biểu 4
     path('bieu4/', views.bieu4_list, name='bieu4_list'),
     path('bieu4/export/', views.bieu4_export, name='bieu4_export'),
+    
+    # APIs
+    path('api/wards/', views.api_wards, name='api_wards'),
 ]

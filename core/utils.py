@@ -441,17 +441,17 @@ def export_bieu1_tonghop():
     ws.title = "Biểu 1"
     
     # Header
-    ws.merge_cells('A1:I1')
+    ws.merge_cells('A1:J1')
     ws['A1'] = 'TỔNG HỢP KẾT QUẢ CÔNG NHẬN MỚI và CÔNG NHẬN LẠI TRƯỜNG CHUẨN QUỐC GIA NĂM 2025'
     ws['A1'].font = Font(bold=True, size=14)
     ws['A1'].alignment = Alignment(horizontal='center')
     
-    ws.merge_cells('A2:I2')
+    ws.merge_cells('A2:J2')
     ws['A2'] = '(Đính kèm công văn số        /UBND-     , ngày    /01/2026 của UBND ...)'
     
     # Column headers
     headers = ['STT', 'Quận, Huyện', 'Phường, xã', 'Tên trường đạt chuẩn quốc gia', 
-               'Cấp học', 'Loại hình', 'Năm đạt chuẩn', 'Mức độ CQG', 'Ghi chú']
+               'Cấp học', 'Loại hình', 'Năm đạt chuẩn', 'Mức độ CQG', 'Số QĐ', 'Ghi chú']
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=4, column=col, value=header)
         cell.font = Font(bold=True)
@@ -482,13 +482,14 @@ def export_bieu1_tonghop():
                 ws.cell(row=row, column=6, value=record.loai_hinh)
                 ws.cell(row=row, column=7, value=record.nam_dat_chuan_gan_nhat)
                 ws.cell(row=row, column=8, value=record.muc_do_cqg)
-                ws.cell(row=row, column=9, value=record.ghi_chu)
+                ws.cell(row=row, column=9, value=record.so_quyet_dinh_cqg)
+                ws.cell(row=row, column=10, value=record.ghi_chu)
                 row += 1
         else:
             # Không có dữ liệu - tạo dòng trống
             ws.cell(row=row, column=1, value=ward.stt)
             ws.cell(row=row, column=3, value=ward.don_vi)
-            ws.cell(row=row, column=9, value='Không có')
+            ws.cell(row=row, column=10, value='Không có')
             row += 1
     
     # Data - Công nhận lại
@@ -513,13 +514,14 @@ def export_bieu1_tonghop():
                 ws.cell(row=row, column=6, value=record.loai_hinh)
                 ws.cell(row=row, column=7, value=record.nam_dat_chuan_gan_nhat)
                 ws.cell(row=row, column=8, value=record.muc_do_cqg)
-                ws.cell(row=row, column=9, value=record.ghi_chu)
+                ws.cell(row=row, column=9, value=record.so_quyet_dinh_cqg)
+                ws.cell(row=row, column=10, value=record.ghi_chu)
                 row += 1
         else:
             # Không có dữ liệu - tạo dòng trống
             ws.cell(row=row, column=1, value=ward.stt)
             ws.cell(row=row, column=3, value=ward.don_vi)
-            ws.cell(row=row, column=9, value='Không có')
+            ws.cell(row=row, column=10, value='Không có')
             row += 1
     
     # Set column widths
@@ -532,6 +534,7 @@ def export_bieu1_tonghop():
     ws.column_dimensions['G'].width = 12
     ws.column_dimensions['H'].width = 12
     ws.column_dimensions['I'].width = 20
+    ws.column_dimensions['J'].width = 20
     
     # Save to response
     output = BytesIO()
@@ -551,13 +554,13 @@ def export_bieu2_tonghop():
     ws = wb.active
     ws.title = "Biểu 2"
     
-    ws.merge_cells('A1:H1')
+    ws.merge_cells('A1:I1')
     ws['A1'] = 'TỔNG HỢP KẾ HOẠCH CÔNG NHẬN MỚI VÀ CÔNG NHẬN LẠI NĂM 2026'
     ws['A1'].font = Font(bold=True, size=14)
     ws['A1'].alignment = Alignment(horizontal='center')
     
     headers = ['STT', 'Phường/xã', 'Tên trường', 'Cấp học', 'Loại hình', 
-               'Năm đạt CQG', 'Đã kiểm tra', 'Ghi chú']
+               'Năm đạt CQG', 'Đã kiểm tra', 'Dự kiến', 'Ghi chú']
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=3, column=col, value=header)
         cell.font = Font(bold=True)
@@ -587,13 +590,14 @@ def export_bieu2_tonghop():
                 ws.cell(row=row, column=5, value=record.loai_hinh)
                 ws.cell(row=row, column=6, value=record.nam_dat_cqg_gan_nhat)
                 ws.cell(row=row, column=7, value=record.phuong_xa_da_kiem_tra)
-                ws.cell(row=row, column=8, value=record.ghi_chu)
+                ws.cell(row=row, column=8, value=record.du_kien_thang)
+                ws.cell(row=row, column=9, value=record.ghi_chu)
                 row += 1
         else:
             # Không có dữ liệu - tạo dòng trống
             ws.cell(row=row, column=1, value=ward.stt)
             ws.cell(row=row, column=2, value=ward.don_vi)
-            ws.cell(row=row, column=8, value='Không có')
+            ws.cell(row=row, column=9, value='Không có')
             row += 1
     
     # Data - Công nhận lại
@@ -618,13 +622,14 @@ def export_bieu2_tonghop():
                 ws.cell(row=row, column=5, value=record.loai_hinh)
                 ws.cell(row=row, column=6, value=record.nam_dat_cqg_gan_nhat)
                 ws.cell(row=row, column=7, value=record.phuong_xa_da_kiem_tra)
-                ws.cell(row=row, column=8, value=record.ghi_chu)
+                ws.cell(row=row, column=8, value=record.du_kien_thang)
+                ws.cell(row=row, column=9, value=record.ghi_chu)
                 row += 1
         else:
             # Không có dữ liệu - tạo dòng trống
             ws.cell(row=row, column=1, value=ward.stt)
             ws.cell(row=row, column=2, value=ward.don_vi)
-            ws.cell(row=row, column=8, value='Không có')
+            ws.cell(row=row, column=9, value='Không có')
             row += 1
     
     output = BytesIO()

@@ -1,15 +1,193 @@
 {% extends 'base.html' %}
 {% block title %}Biểu 4 - CT TP{% endblock %}
 {% block content %}
-<h2>Biểu 4 - CHƯƠNG TRÌNH THÀNH PHỐ GIAO</h2>
-<p>Tự động tính từ Biểu 1</p>
-<a href="{% url 'bieu4_export' %}" class="btn btn-success">Xuất Excel</a>
-<table class="table table-bordered mt-3">
-<thead><tr><th>STT</th><th>Đơn vị</th><th>Công nhận mới</th><th>Công nhận lại</th><th>Loại</th></tr></thead>
-<tbody>
+<style>
+.bieu4-container {
+    font-size: 0.9rem;
+}
+.bieu4-table-wrapper {
+    max-height: 75vh;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+}
+.bieu4-table {
+    font-size: 0.85rem;
+    margin-bottom: 0;
+}
+.bieu4-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: #fff;
+}
+.bieu4-table thead th {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+    vertical-align: middle;
+    padding: 0.5rem;
+    white-space: nowrap;
+}
+.bieu4-table tbody td {
+    padding: 0.5rem;
+    vertical-align: middle;
+}
+.bieu4-table tbody td[contenteditable="true"] {
+    cursor: text;
+    background-color: #fff;
+    transition: background-color 0.2s;
+}
+.bieu4-table tbody td[contenteditable="true"]:hover {
+    background-color: #fff3cd;
+    outline: 1px solid #ffc107;
+}
+.bieu4-table tbody td[contenteditable="true"]:focus {
+    background-color: #e7f1ff;
+    outline: 2px solid #0d6efd;
+}
+</style>
+
+<div class="bieu4-container">
+<h2 class="mb-3">
+    <i class="bi bi-clipboard-data"></i> Biểu 4 - CHƯƠNG TRÌNH THÀNH PHỐ GIAO
+</h2>
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-info">Tổng: {{ records.count }} đơn vị</span>
+                <span class="badge bg-secondary ms-2">Tự động tính từ Biểu 1</span>
+            </div>
+            <div class="d-flex gap-2">
+                <div class="input-group" style="max-width: 300px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="searchUnit" placeholder="Tìm đơn vị..." onkeyup="filterTable()">
+                </div>
+                <a href="{% url 'bieu4_export' %}" class="btn btn-success">
+                    <i class="bi bi-download"></i> Xuất Excel
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bieu4-table-wrapper">
+<table class="table table-bordered bieu4-table">
+<thead>
+<tr>
+<th style="width: 60px;">STT</th>
+<th style="min-width: 150px;">Đơn vị</th>
+<th style="width: 120px; text-align: center;">Công nhận mới</th>
+<th style="width: 120px; text-align: center;">Công nhận lại</th>
+<th style="min-width: 150px;">Ghi chú</th>
+<th style="width: 100px;">Loại</th>
+<th style="width: 120px;">Hành động</th>
+</tr>
+</thead>
+<tbody id="bieu4-tbody">
 {% for r in records %}
-<tr><td>{{ r.stt }}</td><td>{{ r.don_vi }}</td><td>{{ r.cong_nhan_moi }}</td><td>{{ r.cong_nhan_lai }}</td><td>{{ r.loai }}</td></tr>
+<tr id="row-{{ r.id }}">
+<td>{{ r.stt }}</td>
+<td>{{ r.don_vi }}</td>
+<td contenteditable="true" data-field="cong_nhan_moi" class="text-center" title="Click để chỉnh sửa">{{ r.cong_nhan_moi }}</td>
+<td contenteditable="true" data-field="cong_nhan_lai" class="text-center" title="Click để chỉnh sửa">{{ r.cong_nhan_lai }}</td>
+<td contenteditable="true" data-field="ghi_chu" title="Click để chỉnh sửa">{{ r.ghi_chu|default:'' }}</td>
+<td><span class="badge bg-secondary">{{ r.loai }}</span></td>
+<td style="white-space: nowrap;">
+    <button class="btn btn-sm btn-success" onclick="saveRow({{ r.id }})" title="Lưu thay đổi">
+        <i class="bi bi-check-lg"></i> Lưu
+    </button>
+</td>
+</tr>
 {% endfor %}
 </tbody>
 </table>
+</div>
+</div>
+
+<script>
+function getCookie(name) {
+    let value = `; ${document.cookie}`;
+    let parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+function filterTable() {
+    const searchValue = document.getElementById('searchUnit').value.toLowerCase();
+    const tbody = document.getElementById('bieu4-tbody');
+    const rows = tbody.getElementsByTagName('tr');
+    let visibleCount = 0;
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const unitCell = row.cells[1];
+        if (unitCell) {
+            const unitText = unitCell.textContent || unitCell.innerText;
+            if (unitText.toLowerCase().indexOf(searchValue) > -1) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        }
+    }
+}
+
+function saveRow(id) {
+    const row = document.getElementById(`row-${id}`);
+    const data = {
+        cong_nhan_moi: row.querySelector('[data-field="cong_nhan_moi"]').textContent.trim(),
+        cong_nhan_lai: row.querySelector('[data-field="cong_nhan_lai"]').textContent.trim(),
+        ghi_chu: row.querySelector('[data-field="ghi_chu"]').textContent.trim(),
+    };
+    
+    const saveBtn = event.target.closest('button');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang lưu...';
+    saveBtn.disabled = true;
+    
+    fetch(`/bieu4/update/${id}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(data)
+    }).then(r => r.json()).then(data => {
+        if(data.status === 'success') {
+            row.style.backgroundColor = '#d4edda';
+            saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Đã lưu!';
+            setTimeout(() => {
+                row.style.backgroundColor = '';
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+            }, 2000);
+        } else {
+            alert('Lỗi: ' + (data.message || 'Không thể lưu'));
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }).catch(err => {
+        alert('Lỗi kết nối: ' + err);
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+// Hỗ trợ Ctrl+S để lưu
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const focusedCell = document.activeElement;
+        if (focusedCell.hasAttribute('contenteditable')) {
+            const row = focusedCell.closest('tr');
+            if (row && row.id.startsWith('row-')) {
+                const id = row.id.replace('row-', '');
+                saveRow(id);
+            }
+        }
+    }
+});
+</script>
 {% endblock %}

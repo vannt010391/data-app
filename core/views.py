@@ -364,7 +364,9 @@ def bieu3_export(request):
 # ============= BIỂU 4 =============
 def bieu4_list(request):
     """Biểu 4 - Tự động tính từ Biểu 1"""
-    # Tự động tạo/cập nhật
+    # Xóa và tạo lại dữ liệu để tránh trùng lặp
+    Bieu4CTThanhPho.objects.all().delete()
+    
     wards = Ward.objects.all()
     
     for ward in wards:
@@ -374,20 +376,33 @@ def bieu4_list(request):
         # Tạo ghi chú "Không có" nếu không có dữ liệu
         ghi_chu = 'Không có' if (cn_moi == 0 and cn_lai == 0) else ''
         
-        Bieu4CTThanhPho.objects.update_or_create(
+        # Sử dụng create để tránh trùng lặp
+        Bieu4CTThanhPho.objects.create(
             ward=ward,
-            defaults={
-                'stt': ward.stt,
-                'don_vi': ward.don_vi,
-                'cong_nhan_moi': cn_moi,
-                'cong_nhan_lai': cn_lai,
-                'ghi_chu': ghi_chu,
-                'loai': 'PHUONG' if ward.loai == 'phuong' else 'XA'
-            }
+            stt=ward.stt,
+            don_vi=ward.don_vi,
+            cong_nhan_moi=cn_moi,
+            cong_nhan_lai=cn_lai,
+            ghi_chu=ghi_chu,
+            loai=ward.loai.upper() if ward.loai else 'PHUONG'
         )
     
     records = Bieu4CTThanhPho.objects.select_related('ward').all()
     return render(request, 'bieu4_list.html', {'records': records})
+
+
+def bieu4_update(request, pk):
+    """Cập nhật Biểu 4"""
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        record = Bieu4CTThanhPho.objects.get(pk=pk)
+        
+        record.cong_nhan_moi = int(data.get('cong_nhan_moi', 0))
+        record.cong_nhan_lai = int(data.get('cong_nhan_lai', 0))
+        record.ghi_chu = data.get('ghi_chu', '')
+        record.source = 'adjusted'
+        record.save()
+        return JsonResponse({'status': 'success'})
 
 
 def bieu4_export(request):

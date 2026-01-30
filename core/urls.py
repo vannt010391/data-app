@@ -36,6 +36,7 @@ urlpatterns = [
     
     # Biểu 4
     path('bieu4/', views.bieu4_list, name='bieu4_list'),
+    path('bieu4/update/<int:pk>/', views.bieu4_update, name='bieu4_update'),
     path('bieu4/export/', views.bieu4_export, name='bieu4_export'),
     
     # APIs

@@ -165,6 +165,10 @@ class Bieu4CTThanhPho(models.Model):
     class Meta:
         db_table = 'bieu4_ct_thanh_pho'
         ordering = ['stt']
+        # Đảm bảo mỗi ward chỉ có 1 record
+        constraints = [
+            models.UniqueConstraint(fields=['ward'], name='unique_ward_bieu4')
+        ]
 
     def __str__(self):
         return f"Biểu 4 - {self.stt}. {self.don_vi}"
